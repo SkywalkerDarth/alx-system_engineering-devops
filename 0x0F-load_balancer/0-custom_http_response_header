@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Configure Nginx so that its HTTP response contains a custom header (on web-01 and web-02)
+# The name of the custom HTTP header must be X-Served-By
+# The value of the custom HTTP header must be the hostname of the server Nginx is running on
+
+# update package list and information for debian systems of which ubuntu is one
+# sudo is a command to temporarily become super user in linux,
+# install nginx web server on your system, -y options automatically answers yes to all incoming prompts
+sudo apt-get update
+sudo apt-get -y install nginx
+
+# chown is to change ownership of file in linux systems
+# "$USER":"$USER": sets the new owner and group to the current user.
+# The "$USER" environment variable returns the name of the current user who is executing the command.
+sudo chown -R "$USER":"$USER" /var/www
+
+# create the index page, echo to display on your linux command prompt, displays Hello World
+# |(pipe) send the Hello World to the tee command which read from standard input
+# and write to standard output and files simultaneously. to store in a file index.html found in 'var/www/html/' directory
+echo "Hello World!" | sudo tee /var/www/html/index.nginx-debian.html
+
+# same as above except this is sent to a 404.html error page for handling
+# ceci n'est pas une page(french) -> This is not a page (English) i think. forgive my french.
+echo "Ceci n'est pas une page" | sudo tee /usr/share/nginx/html/404.html
+
+# sed to manipulate text, -i flag modifies and inserts at page 48, \\\t is escape the middle \ and \t as tab.
+# \$request..._me)is an if statement that checks if the requested filename matches the string "redirect_me".
+# The backslash before the dollar sign is used to escape it so that it's interpreted literally.
+# if true, rewrite redirects the user to the specified URL which is a youtube url
+# file to be edited by sed is found in /etc/nginx/sites-available/default
+sudo sed -i "48i\\\tif (\$request_filename ~ redirect_me){\n\t\t\
+rewrite ^ https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;\n\t}" /etc/nginx/sites-available/default
+
+# code to configure redirect for 404 error page
+# string_for_replacement is a variable that contains the new configuration block as a string. 
+# This block includes the "listen" directive for port 80, an "error_page" directive that redirects to a custom 404 error page
+# and a "location" block that specifies the path to the custom error page.
+# sed command same as above, the script replaces the default configuration for the web server to handle;
+# 404 errors with a custom configuration block that redirects to a custom error page.
+string_for_replacement="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
+sudo sed -i "s/listen 80 default_server;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+
+# restart the web server after updating the settings
+sudo service nginx restart
