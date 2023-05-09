@@ -1,34 +1,28 @@
 #!/usr/bin/python3
 """
-function thay queries the Reddit ApI and returns the
-list containing the titles of all hot articles for a given subreddit.
+recurse
 """
-import requests
-import sys
+from json import loads
+from requests import get
 
-def 
-    """queries to Reddit Api"""
-    user_agent = 'Mozilla/5.0'
 
+def recurse(subreddit, hot_list=[]):
+    """recursive function that queries the Reddit API and returns a list
+    """
+    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
     headers = {
-        'User-Agent': user_agent
+        'User-Agent':
+        'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) \
+        Gecko/20100401 Firefox/3.6.3 (FM Scene 4.6.1)'
     }
+    response = get(url, headers=headers, allow_redirects=False)
+    reddits = response.json()
 
-    params = {
-        'limit': 10
-    }
-
-     url = "https://www.reddit.com/r/{}/hot.json".format(subreddit)
-     res = requests.get(url, 
-                        headers=headers, 
-                        params=params, 
-                        allow_redirects=False)
-     if res.status_code != 200:
-         return 0
-     dic = res.json()
-     hot_posts = dic['data']['children']
-     if len(hot_posts) is 0:
+    try:
+        children = reddits.get('data').get('children')
+        for title in children:
+            hot_list.append(title.get('data').get('title'))
+        return hot_list
+    except:
         print(None)
-    else:
-        for post in hot_posts:
-            print(post['data']['title'])
+        return 0
